@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Image Upload</title>
+  <style>
+    body {
+      text-align: center;
+      margin-top: 50px;
+    }
+    .image-container {
+      margin-bottom: 20px;
+    }
+    #result{
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        list-style: none;
+    }
+    #result >*{
+        width: 100px;
+        height: 120px;
+        border: 1px solid;
+        background-color: #ddd;
+        counter-increment: li;
+    }
+    #result >*::before{
+        content: counter(li)".";
+        color: red;
+    }
+    #result img{
+        width: 100%;
+        height: calc(100% - 20px);
+        object-fit: contain;
+    }
+  </style>
+</head>
+<body>
+  <h1>Image Upload</h1>
+  <form id="uploadForm" enctype="multipart/form-data">
+    <input type="file" name="images" multiple  accept="image/png, image/jpeg">
+    <button type="submit">Upload</button>
+  </form>
+<button onclick="DownloadAll()">Download All</button>
+  <ul id="result"></ul>
+
+  <script>
+    const form = document.getElementById('uploadForm');
+    let webpPaths
+
+function clickFile(item) {
+  // console.log("dummy");
+    // item.click()
+    // const fileDelete= JSON.stringify({fileName: item.getAttribute("href")})
+    // console.log(fileDelete);
+    // sendDelete(fileDelete)
+}
+function DownloadAll() {
+  const listDelete=[]
+    document.querySelectorAll('a[download]').forEach(el=>{
+      listDelete.push(el.getAttribute("href"))
+      el.click()
+    })
+    sendDelete(JSON.stringify(listDelete))
+}
+
+function sendDelete(data) {
+  setTimeout(() => {
+    fetch('/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: data
+      })
+      .then(response => response.json())
+      .then((data1) => {
+        console.log(data1.ok);
+      })
+      .catch(error => {
+        console.error('Error deleting file:', error);
+      });
+  }, 3000);
+}
+
+    form.addEventListener('submit', (event) => {
+        const resultDiv=window = document.getElementById('result');
+        resultDiv.innerHTML=""
+      event.preventDefault();
+
+      const formData = new FormData(form);
+      // console.log(formData);
+      fetch('/', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        webpPaths= data.webpPaths
+
+        const html = webpPaths.map((link) => `
+        <li>
+            <a href="${link}" download onclick="clickFile(this)">
+            ${link.slice(link.indexOf("webp/")+5, (link.length))}
+            <img src="${link}">
+            </a>
+        </li>
+        `);
+        resultDiv.innerHTML=`${html.join("")}`
+      })
+      .catch(error => {
+        resultDiv.innerText = 'Upload failed. Please try again.';
+        console.error(error);
+      });
+    });
+  </script>
+</body>
+</html>
