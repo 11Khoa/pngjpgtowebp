@@ -82,15 +82,17 @@ app.post('/', upload.array('images'), (req, res) => {
 app.post('/delete', (req, res) => {
   const listFile=req.body
   console.log();
-  listFile.forEach(el=>{
-    try {
-      fs.unlinkSync(el);
-      console.log(`Deleted file: ${el}`);
-      res.json({ ok: `Deleted ${listFile.length} file` });
-    } catch (error) {
-      console.error('Error deleting image:', error);
-    }
-  })
+  setTimeout(() => {
+    listFile.forEach(el=>{
+      try {
+        fs.unlinkSync(el);
+        console.log(`Deleted file: ${el}`);
+        res.json({ ok: `Deleted ${listFile.length} file` });
+      } catch (error) {
+        console.error('Error deleting image:', error);
+      }
+    })
+  }, 1000*60*5); // 5 phuts
 })
 
 app.listen(port, () => {

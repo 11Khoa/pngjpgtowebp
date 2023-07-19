@@ -1,11 +1,33 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Image Upload</title>
+  <title>Image To *.Webp</title>
   <style>
     body {
       text-align: center;
       margin-top: 50px;
+      position: relative;
+      z-index: 1;
+      transition: .3s;
+    }
+    body::before{
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0, 0, 0, .2);
+      opacity: 0;
+      visibility: hidden;
+      transition: .3s;
+    }
+    body.waiting::before{
+      opacity: 1;
+      visibility: hidden;
+      visibility: visible;
     }
     .image-container {
       margin-bottom: 20px;
@@ -32,10 +54,67 @@
         height: calc(100% - 20px);
         object-fit: contain;
     }
+    .loader,
+    .loader:after {
+      border-radius: 50%;
+      width: 10em;
+      height: 10em;
+    }
+    .outer-load{
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%,-50%);
+      visibility: hidden;
+      opacity: 0;
+    }
+    .loader {
+      margin: 60px auto;
+      font-size: 10px;
+      text-indent: -9999em;
+      border-top: 1.1em solid rgba(255, 255, 255, 0.2);
+      border-right: 1.1em solid rgba(255, 255, 255, 0.2);
+      border-bottom: 1.1em solid rgba(255, 255, 255, 0.2);
+      border-left: 1.1em solid #ffffff;
+      -webkit-transform: translateZ(0);
+      -ms-transform: translateZ(0);
+      transform: translateZ(0);
+      -webkit-animation: load8 1.1s infinite linear;
+      animation: load8 1.1s infinite linear;
+      overflow: hidden;
+    }
+    body.waiting .outer-load{
+      opacity: 1;
+      visibility: visible;
+    }
+    @-webkit-keyframes load8 {
+      0% {
+        -webkit-transform: rotate(0deg);
+        transform: rotate(0deg);
+      }
+      100% {
+        -webkit-transform: rotate(360deg);
+        transform: rotate(360deg);
+      }
+    }
+    @keyframes load8 {
+      0% {
+        -webkit-transform: rotate(0deg);
+        transform: rotate(0deg);
+      }
+      100% {
+        -webkit-transform: rotate(360deg);
+        transform: rotate(360deg);
+      }
+    }
+
   </style>
 </head>
 <body>
-  <h1>Image Upload</h1>
+  <div class="outer-load">
+    <div class="loader">Loading...</div>
+  </div>
+  <h1>Image To *.Webp</h1>
   <form id="uploadForm" enctype="multipart/form-data">
     <input type="file" name="images" multiple  accept="image/png, image/jpeg">
     <button type="submit">Upload</button>
@@ -64,25 +143,24 @@ function DownloadAll() {
 }
 
 function sendDelete(data) {
-  setTimeout(() => {
     fetch('/delete', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: data
-      })
-      .then(response => response.json())
-      .then((data1) => {
-        console.log(data1.ok);
-      })
-      .catch(error => {
-        console.error('Error deleting file:', error);
-      });
-  }, 3000);
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: data
+    })
+    .then(response => response.json())
+    .then((data1) => {
+      console.log(data1.ok);
+    })
+    .catch(error => {
+      console.error('Error deleting file:', error);
+    });
 }
 
     form.addEventListener('submit', (event) => {
+      document.querySelector("body").classList.add("waiting")
         const resultDiv=window = document.getElementById('result');
         resultDiv.innerHTML=""
       event.preventDefault();
@@ -106,6 +184,7 @@ function sendDelete(data) {
         </li>
         `);
         resultDiv.innerHTML=`${html.join("")}`
+        if(html.length>0) document.querySelector("body").classList.remove("waiting")
       })
       .catch(error => {
         resultDiv.innerText = 'Upload failed. Please try again.';
