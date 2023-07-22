@@ -7,6 +7,7 @@ const path = require('path');
 const sharp = require('sharp');
 const fs = require('fs');
 var bodyParser = require('body-parser');
+const cron = require('cron');
 // const { error } = require('console');
 
 const app = express();
@@ -98,3 +99,45 @@ app.post('/delete', (req, res) => {
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
+
+
+
+
+// Function to delete image files older than 30 minutes
+function deleteFilesByCreationTime() {
+  const directory = 'uploads/webp'; 
+  fs.readdir(directory, (err, files) => {
+    if (err) {
+      console.error('Error reading directory:', err);
+      return;
+    }
+
+    // Get file stats and sort files by creation time (oldest to newest)
+    const fileStats = files.map(file => {
+      const filePath = path.join(directory, file);
+      const stats = fs.statSync(filePath);
+      return {
+        file,
+        stats,
+      };
+    });
+
+    const sortedFiles = fileStats.sort((a, b) => a.stats.birthtime.getTime() - b.stats.birthtime.getTime());
+
+    // Delete files in sorted order
+    sortedFiles.forEach(({ file }) => {
+      const filePath = path.join(directory, file);
+      fs.unlink(filePath, err => {
+        if (err) {
+          console.error('Error deleting file:', err);
+          return;
+        }
+        console.log(`Deleted ${filePath}`);
+      });
+    });
+  });
+}
+// Cron job that runs every minute and calls the deleteOldImages function
+const job = new cron.CronJob('*/30 * * * *', deleteFilesByCreationTime); // Change '*/1' to '*/30' if you want to run every 30 minutes
+
+job.start();
